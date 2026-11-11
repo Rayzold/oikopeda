@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Οικόπεδα</title>
+<style>
+  :root {
+    --bg: #f5f4f0; --card: #fff; --ink: #1d1d1b; --muted: #6b6a65; --line: #e2e0d8;
+    --accent: #2f5d50; --accent-ink: #fff;
+    --s-new: #6b6a65; --s-called: #2d6cdf; --s-waiting: #b7791f; --s-interested: #2f855a; --s-rejected: #c53030;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+  button, input, select, textarea { font: inherit; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+  .hidden { display: none !important; }
+
+  /* login */
+  #login { max-width: 360px; margin: 12vh auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+  #login h1 { margin: 0 0 16px; font-size: 22px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  input, select, textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+  textarea { min-height: 70px; resize: vertical; }
+  .btn { border: 0; border-radius: 8px; padding: 9px 14px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn.small { padding: 5px 10px; font-size: 13px; }
+  .err { color: var(--s-rejected); font-size: 14px; margin-top: 10px; min-height: 1em; }
+
+  /* top bar */
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .bar h1 { font-size: 20px; margin: 0 auto 0 0; }
+  .who { font-size: 13px; color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .chip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+  @media (max-width: 640px) { .filters { grid-template-columns: 1fr 1fr; } .filters .q { grid-column: 1 / -1; } }
+  .count { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+  /* cards */
+  .card { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--s-new); border-radius: 10px; padding: 14px; margin-top: 12px; }
+  .card[data-s="called"] { border-left-color: var(--s-called); }
+  .card[data-s="waiting"] { border-left-color: var(--s-waiting); }
+  .card[data-s="interested"] { border-left-color: var(--s-interested); }
+  .card[data-s="rejected"] { border-left-color: var(--s-rejected); opacity: .72; }
+  .top { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; }
+  .title { font-weight: 600; font-size: 16px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #efeee9; color: var(--muted); margin-right: 4px; }
+  .badge.a { background: #e3f1ea; color: #22543d; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0; font-size: 14px; }
+  .facts b { font-weight: 600; }
+  .excerpt { font-size: 14px; color: #3a3a37; border-left: 3px solid var(--line); padding-left: 10px; margin: 8px 0; }
+  details { font-size: 14px; margin-top: 6px; }
+  summary { cursor: pointer; color: var(--accent); }
+  .links a { display: inline-block; margin: 4px 10px 0 0; color: var(--accent); word-break: break-all; }
+  .status-sel { width: auto; min-width: 170px; }
+  .last { font-size: 13px; margin-top: 10px; padding: 8px 10px; background: #f7f6f2; border-radius: 8px; }
+  .notes { margin-top: 8px; }
+  .note { border-top: 1px solid var(--line); padding: 8px 0; font-size: 14px; }
+  .note .meta { font-size: 12px; color: var(--muted); }
+  .addnote { display: flex; gap: 8px; margin-top: 8px; }
+  .addnote textarea { min-height: 42px; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+
+  /* dialog */
+  dialog { border: 1px solid var(--line); border-radius: 12px; padding: 20px; width: min(520px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .warn { background: #fff7e0; border: 1px solid #f0d58c; border-radius: 8px; padding: 8px 10px; font-size: 14px; margin-top: 10px; }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<div id="login" class="hidden">
+  <h1>Οικόπεδα</h1>
+  <form id="loginForm">
+    <label for="name">Το όνομά σου</label>
+    <input id="name" autocomplete="name" required placeholder="π.χ. Κώστας">
+    <label for="pw">Κωδικός ομάδας</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <div style="margin-top:16px"><button class="btn" type="submit">Είσοδος</button></div>
+    <div class="err" id="loginErr"></div>
+  </form>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="wrap" style="padding-bottom:0">
+      <div class="bar">
+        <h1>Οικόπεδα</h1>
+        <span class="who" id="who"></span>
+        <button class="btn small" id="addBtn">+ Νέο οικόπεδο</button>
+        <button class="btn ghost small" id="refreshBtn">Ανανέωση</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="filters">
+        <input class="q" id="q" placeholder="Αναζήτηση: περιοχή, κωδικός, μεσίτης…">
+        <select id="fNomos"><option value="">Όλοι οι νομοί</option></select>
+        <select id="fCat">
+          <option value="">Όλες οι κατηγορίες</option>
+          <option value="Α">Α: ρητή κατάτμηση</option>
+          <option value="Β">Β: υπολογιστικά πιθανή</option>
+          <option value="Γ">Γ: δόμηση ≥1.000 τ.μ.</option>
+          <option value="N">Προστέθηκαν από την ομάδα</option>
+        </select>
+        <select id="sort">
+          <option value="eur">€/τ.μ. γης ↑</option>
+          <option value="price">Τιμή ↑</option>
+          <option value="land">Έκταση ↓</option>
+          <option value="updated">Πρόσφατη κίνηση</option>
+          <option value="id">Κωδικός</option>
+        </select>
+      </div>
+      <div class="count" id="count"></div>
+    </div>
+  </header>
+  <main class="wrap" id="list"></main>
+</div>
+
+<dialog id="addDlg">
+  <form id="addForm" method="dialog">
+    <h2 style="margin:0 0 4px;font-size:18px">Νέο οικόπεδο</h2>
+    <div class="grid2">
+      <div><label>Νομός</label><input name="nomos" list="nomosList" required></div>
+      <div><label>Περιοχή</label><input name="area" required></div>
+      <div><label>Τιμή €</label><input name="price" type="number" min="0" step="1000" inputmode="numeric"></div>
+      <div><label>Έκταση τ.μ.</label><input name="land_m2" type="number" min="0" inputmode="numeric"></div>
+      <div><label>Πρόσωπο μ.</label><input name="frontage"></div>
+      <div><label>Μεσίτης</label><input name="broker"></div>
+      <div><label>Τηλέφωνο</label><input name="phone" type="tel"></div>
+      <div><label>Κατηγορία</label>
+        <select name="category">
+          <option value="">Χωρίς</option>
+          <option>Α: ρητή κατάτμηση</option>
+          <option>Β: υπολογιστικά πιθανή</option>
+          <option>Γ: δόμηση ≥1.000 τ.μ.</option>
+        </select>
+      </div>
+    </div>
+    <label>Link αγγελίας</label><input name="links" type="url" placeholder="https://">
+    <label>Σημείωση</label><textarea name="remarks"></textarea>
+    <datalist id="nomosList"></datalist>
+    <div class="warn hidden" id="dupWarn"></div>
+    <div class="err" id="addErr"></div>
+    <div class="actions">
+      <button class="btn ghost" type="button" id="addCancel">Άκυρο</button>
+      <button class="btn" type="submit" id="addSave">Αποθήκευση</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://tuvahisskkllqdtbioeo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_aSuIKDmfs9icv9EDbHpRcg_R5LniMbA';
+const TEAM_EMAIL = 'team@oikopeda.app';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const STATUS = {
+  new: 'Νέο', called: 'Κλήθηκε', waiting: 'Αναμένουμε', interested: 'Ενδιαφέρον', rejected: 'Δεν μας κάνει'
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = n => n == null ? '—' : Number(n).toLocaleString('el-GR', {maximumFractionDigits: 0}) + ' €';
+const num = n => n == null ? '—' : Number(n).toLocaleString('el-GR', {maximumFractionDigits: 0});
+const when = t => new Date(t).toLocaleString('el-GR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+
+let plots = [], notesBy = {}, fStatus = '', me = store.get('oik_name') || '';
+const open = new Set();
+
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && me) return showApp();
+  $('#name').value = me;
+  $('#login').classList.remove('hidden');
+}
+
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('#loginErr').textContent = '';
+  me = $('#name').value.trim();
+  const { error } = await sb.auth.signInWithPassword({ email: TEAM_EMAIL, password: $('#pw').value });
+  if (error) { $('#loginErr').textContent = 'Λάθος κωδικός.'; return; }
+  store.set('oik_name', me);
+  $('#login').classList.add('hidden');
+  showApp();
+});
+
+async function showApp() {
+  $('#app').classList.remove('hidden');
+  $('#who').innerHTML = esc(me) + ' · <a href="#" id="logout">έξοδος</a>';
+  $('#logout').onclick = async e => { e.preventDefault(); await sb.auth.signOut(); location.reload(); };
+  await load();
+}
+
+async function load() {
+  const [p, n] = await Promise.all([
+    sb.from('plots').select('*'),
+    sb.from('notes').select('*').order('created_at', { ascending: false })
+  ]);
+  if (p.error || n.error) {
+    $('#list').innerHTML = '<div class="empty">Δεν φόρτωσαν τα δεδομένα. Δοκίμασε ξανά είσοδο.</div>';
+    return;
+  }
+  plots = p.data;
+  notesBy = {};
+  for (const x of n.data) (notesBy[x.plot_id] ||= []).push(x);
+  const nomoi = [...new Set(plots.map(x => x.nomos).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'el'));
+  const sel = $('#fNomos'), cur = sel.value;
+  sel.innerHTML = '<option value="">Όλοι οι νομοί</option>' + nomoi.map(x => `<option>${esc(x)}</option>`).join('');
+  sel.value = cur;
+  $('#nomosList').innerHTML = nomoi.map(x => `<option value="${esc(x)}">`).join('');
+  render();
+}
+
+function eurM2(p) { return p.price && p.land_m2 ? p.price / p.land_m2 : null; }
+
+function render() {
+  const counts = { '': plots.length };
+  for (const p of plots) counts[p.status] = (counts[p.status] || 0) + 1;
+  $('#chips').innerHTML = [['', 'Όλα'], ...Object.entries(STATUS)].map(([k, v]) =>
+    `<button class="chip ${fStatus === k ? 'on' : ''}" data-k="${k}">${v} ${counts[k] || 0}</button>`).join('');
+  $('#chips').querySelectorAll('.chip').forEach(b => b.onclick = () => { fStatus = b.dataset.k; render(); });
+
+  const q = $('#q').value.trim().toLowerCase(), nom = $('#fNomos').value, cat = $('#fCat').value;
+  let list = plots.filter(p =>
+    (!fStatus || p.status === fStatus) &&
+    (!nom || p.nomos === nom) &&
+    (!cat || (cat === 'N' ? p.id.startsWith('N') : (p.category || '').startsWith(cat))) &&
+    (!q || [p.id, p.area, p.nomos, p.broker, p.excerpt, p.remarks, p.links].join(' ').toLowerCase().includes(q))
+  );
+  const s = $('#sort').value;
+  const lastMove = p => Math.max(new Date(p.updated_at), ...(notesBy[p.id] || []).map(n => new Date(n.created_at)));
+  const cmp = {
+    eur: (a, b) => (eurM2(a) ?? 1e12) - (eurM2(b) ?? 1e12),
+    price: (a, b) => (a.price ?? 1e12) - (b.price ?? 1e12),
+    land: (a, b) => (b.land_m2 ?? 0) - (a.land_m2 ?? 0),
+    updated: (a, b) => lastMove(b) - lastMove(a),
+    id: (a, b) => a.id.localeCompare(b.id)
+  }[s];
+  list.sort(cmp);
+  $('#count').textContent = `${list.length} από ${plots.length}`;
+  $('#list').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">Τίποτα με αυτά τα φίλτρα.</div>';
+  bind();
+}
+
+function linksOf(p) {
+  return [p.links, p.link2].filter(Boolean).join(' ').split(/[\s|]+/).filter(u => /^https?:\/\//.test(u));
+}
+
+function card(p) {
+  const notes = notesBy[p.id] || [];
+  const last = notes[0];
+  const catA = (p.category || '').startsWith('Α');
+  const links = linksOf(p);
+  return `<article class="card" data-s="${p.status}" data-id="${esc(p.id)}">
+    <div class="top">
+      <div>
+        <div class="title">${esc(p.area)}</div>
+        <div class="sub">${esc(p.nomos || '')} · ${esc(p.id)}${p.added_by && p.added_by !== 'Valkyrie' ? ' · πρόσθεσε ' + esc(p.added_by) : ''}</div>
+        <div style="margin-top:6px">${p.category ? `<span class="badge ${catA ? 'a' : ''}">${esc(p.category)}</span>` : ''}</div>
+      </div>
+      <select class="status-sel" aria-label="Κατάσταση">
+        ${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${p.status === k ? 'selected' : ''}>${v}</option>`).join('')}
+      </select>
+    </div>
+    <div class="facts">
+      <span><b>${eur(p.price)}</b></span>
+      <span>${num(p.land_m2)} τ.μ.</span>
+      <span>${eurM2(p) ? num(eurM2(p)) + ' €/τ.μ.' : ''}</span>
+      ${p.frontage ? `<span>Πρόσωπο: ${esc(p.frontage)}</span>` : ''}
+      ${p.est_parts ? `<span>Τεμάχια: ${esc(p.est_parts)}</span>` : ''}
+      ${p.built_m2 ? `<span>Δόμηση: ${esc(p.built_m2)}</span>` : ''}
+      ${p.broker ? `<span>Μεσίτης: ${esc(p.broker)}</span>` : ''}
+      ${p.phone ? `<span><a href="tel:${esc(p.phone.replace(/\s/g, ''))}">${esc(p.phone)}</a></span>` : ''}
+    </div>
+    ${p.excerpt ? `<div class="excerpt">${esc(p.excerpt)}</div>` : ''}
+    <div class="links">${links.map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener">Αγγελία${links.length > 1 ? ' ' + (i + 1) : ''} ↗</a>`).join('')}</div>
+    ${(p.to_verify || p.basis || p.remarks) ? `<details><summary>Τι πρέπει να επιβεβαιωθεί</summary>
+      ${p.to_verify ? `<p>${esc(p.to_verify)}</p>` : ''}
+      ${p.basis ? `<p class="sub">Βάση κρίσης: ${esc(p.basis)}</p>` : ''}
+      ${p.remarks ? `<p class="sub">${esc(p.remarks)}</p>` : ''}
+    </details>` : ''}
+    ${last ? `<div class="last"><b>${esc(last.author)}</b> · ${when(last.created_at)}${last.status ? ' · ' + STATUS[last.status] : ''}<br>${esc(last.body || '')}</div>` : ''}
+    <details class="notes" ${open.has(p.id) ? 'open' : ''}>
+      <summary>Σημειώσεις (${notes.length})</summary>
+      ${notes.map(n => `<div class="note"><div class="meta">${esc(n.author)} · ${when(n.created_at)}${n.status ? ' · ' + STATUS[n.status] : ''}</div>${esc(n.body || '')}</div>`).join('')}
+      <form class="addnote">
+        <textarea placeholder="π.χ. αναμένουμε τοπογραφικό" required></textarea>
+        <button class="btn small" type="submit">Προσθήκη</button>
+      </form>
+    </details>
+  </article>`;
+}
+
+function bind() {
+  document.querySelectorAll('.card').forEach(el => {
+    const id = el.dataset.id;
+    el.querySelector('.status-sel').onchange = async e => {
+      const status = e.target.value;
+      const { error } = await sb.from('plots').update({ status, updated_by: me }).eq('id', id);
+      if (error) { alertErr(error); return; }
+      await sb.from('notes').insert({ plot_id: id, author: me, status, body: 'Κατάσταση: ' + STATUS[status] });
+      await load();
+    };
+    const det = el.querySelector('details.notes');
+    det.ontoggle = () => det.open ? open.add(id) : open.delete(id);
+    el.querySelector('.addnote').onsubmit = async e => {
+      e.preventDefault();
+      const ta = e.target.querySelector('textarea');
+      const body = ta.value.trim();
+      if (!body) return;
+      e.target.querySelector('button').disabled = true;
+      const { error } = await sb.from('notes').insert({ plot_id: id, author: me, body });
+      if (error) { alertErr(error); e.target.querySelector('button').disabled = false; return; }
+      open.add(id);
+      await load();
+    };
+  });
+}
+
+function alertErr(error) {
+  console.error(error);
+  $('#count').textContent = 'Κάτι δεν αποθηκεύτηκε: ' + error.message;
+}
+
+['#q', '#fNomos', '#fCat', '#sort'].forEach(s => $(s).addEventListener('input', render));
+$('#refreshBtn').onclick = load;
+
+// add plot
+const dlg = $('#addDlg'), form = $('#addForm');
+$('#addBtn').onclick = () => { form.reset(); $('#dupWarn').classList.add('hidden'); $('#addErr').textContent = ''; dupConfirmed = false; dlg.showModal(); };
+$('#addCancel').onclick = () => dlg.close();
+let dupConfirmed = false;
+function findDup(v) {
+  const link = (v.links || '').trim();
+  return plots.find(p =>
+    (link && linksOf(p).some(u => u.replace(/\/$/, '') === link.replace(/\/$/, ''))) ||
+    (v.price && p.price && Math.abs(p.price - v.price) <= p.price * 0.05 &&
+     (p.nomos || '').trim() === v.nomos.trim() &&
+     (!v.land_m2 || !p.land_m2 || Math.abs(p.land_m2 - v.land_m2) <= p.land_m2 * 0.05)));
+}
+form.addEventListener('input', () => { dupConfirmed = false; $('#addSave').textContent = 'Αποθήκευση'; });
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData(form));
+  const v = {
+    nomos: f.nomos.trim(), area: f.area.trim(), category: f.category || null,
+    price: f.price ? Number(f.price) : null, land_m2: f.land_m2 ? Number(f.land_m2) : null,
+    frontage: f.frontage.trim() || null, broker: f.broker.trim() || null, phone: f.phone.trim() || null,
+    links: f.links.trim() || null, remarks: f.remarks.trim() || null, added_by: me, updated_by: me
+  };
+  const dup = findDup(v);
+  if (dup && !dupConfirmed) {
+    $('#dupWarn').innerHTML = `Μοιάζει με το <b>${esc(dup.id)}</b>: ${esc(dup.area)}, ${eur(dup.price)}, ${num(dup.land_m2)} τ.μ. Αν είναι άλλο οικόπεδο, πάτα ξανά αποθήκευση.`;
+    $('#dupWarn').classList.remove('hidden');
+    $('#addSave').textContent = 'Αποθήκευση ούτως ή άλλως';
+    dupConfirmed = true;
+    return;
+  }
+  const { error } = await sb.from('plots').insert(v);
+  if (error) { $('#addErr').textContent = 'Δεν αποθηκεύτηκε: ' + error.message; return; }
+  dlg.close();
+  await load();
+});
+
+setInterval(() => { if (!document.hidden && !document.querySelector('.addnote textarea:focus')) load(); }, 60000);
+boot();
+</script>
+</body>
+</html>
